@@ -15,6 +15,13 @@ var constant = math.complex(0.28, 0.01);
 
 function update() {
   header.innerHTML = constant.toString();
+  draw();
+}
+
+function pointToColor(point) {
+  var red = point.re * 255;
+  var green = point.im * 255;
+  return `rgb(${red}, ${green}, 0)`;
 }
 
 function pixelToPoint(x, y) {
@@ -24,6 +31,17 @@ function pixelToPoint(x, y) {
 
   // Create a complex number based on our new XY Values
   return math.complex(zx, zy);
+}
+
+function drawPixel(x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, 1, 1);
+}
+
+function draw() {
+  var color = pointToColor(constant);
+
+  drawPixel(mouseX, mouseY, color);
 }
 
 function move(event) {
