@@ -19,9 +19,13 @@ function update() {
 }
 
 function pointToColor(point) {
+  point = point.div(constant);
+
   var red = point.re * 255;
   var green = point.im * 255;
-  return `rgb(${red}, ${green}, 0)`;
+  var blue = math.abs(point) * 255;
+
+  return `rgb(${red}, ${green}, ${blue})`;
 }
 
 function pixelToPoint(x, y) {
@@ -39,9 +43,15 @@ function drawPixel(x, y, color) {
 }
 
 function draw() {
-  var color = pointToColor(constant);
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      var point = pixelToPoint(x, y);
 
-  drawPixel(mouseX, mouseY, color);
+      var color = pointToColor(point);
+
+      drawPixel(x, y, color);
+    }
+  }
 }
 
 function move(event) {
@@ -57,3 +67,5 @@ function move(event) {
 }
 
 canvas.addEventListener("mousemove", move);
+
+update();
