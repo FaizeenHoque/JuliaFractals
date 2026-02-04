@@ -2,7 +2,7 @@ var header = document.querySelector("h2");
 var canvas = document.querySelector("canvas");
 var ctx = canvas.getContext("2d");
 
-var width = 100;
+var width = 1000;
 var height = width;
 
 canvas.width = width;
@@ -18,8 +18,12 @@ var maxIterations = 64;
 var clicked = false;
 var pan = math.complex(0, 0);
 
+var zoom = 1;
+var baseIterations = 64;
+
 function update() {
-  header.innerHTML = constant.toString();
+  maxIterations = baseIterations + Math.floor(Math.log2(zoom) * 32);
+  header.innerHTML = constant.toString() + " at " + zoom + "X";
   draw();
 }
 
@@ -32,7 +36,9 @@ function click(event) {
   mouseX = event.clientX - canvas.offsetLeft;
   mouseY = event.clientY - canvas.offsetTop;
 
-  pan = pixelToPoint(mouseX, mouseY).sub(constant);
+  pan = pixelToPoint(mouseX, mouseY);
+
+  zoom *= 2;
 
   update();
 }
@@ -53,12 +59,20 @@ function move(event) {
   update();
 }
 
-function julia(z, i = 0) {
-  z = z.mul(z);
-  z = z.add(constant);
+function julia(zx, zy) {
+  var cx = constant.re;
+  var cy = constant.im;
 
-  if (math.abs(z) > 2 || i == maxIterations) return i;
-  else return julia(z, i + 1);
+  for (var i = 0; i < maxIterations; i++) {
+    var x2 = zx * zx;
+    var y2 = zy * zy;
+
+    if (x2 + y2 > 4) return i;
+
+    zy = 2 * zx * zy + cy;
+    zx = x2 - y2 + cx;
+  }
+  return maxIterations;
 }
 
 function pointToColor(point) {
@@ -74,15 +88,15 @@ function pointToColor(point) {
 }
 
 function pixelToPoint(x, y) {
-  // Map percentage of total width/height to a value from -1 to +1
   var zx = (x / width) * 2 - 1;
-  var zy = (y / height) * 2 - 1;
+  var zy = 1 - (y / height) * 2;
 
   var z = math.complex(zx, zy);
 
+  z = z.div(zoom);
+
   z = z.add(pan);
 
-  // Create a complex number based on our new XY Values
   return z;
 }
 
@@ -92,15 +106,29 @@ function drawPixel(x, y, color) {
 }
 
 function draw() {
+  var imageData = ctx.createImageData(width, height);
+  var data = imageData.data;
+
   for (var y = 0; y < height; y++) {
     for (var x = 0; x < width; x++) {
-      var point = pixelToPoint(x, y);
+      var zx = (x / width) * 2 - 1;
+      var zy = 1 - (y / height) * 2;
 
-      var color = pointToColor(point);
+      zx = zx / zoom + pan.re;
+      zy = zy / zoom + pan.im;
 
-      drawPixel(x, y, color);
+      var iterations = julia(zx, zy);
+      var color = (iterations / maxIterations) * 255;
+
+      var idx = (y * width + x) * 4;
+      data[idx] = color; // R
+      data[idx + 1] = color; // G
+      data[idx + 2] = color; // B
+      data[idx + 3] = 255; // A
     }
   }
+
+  ctx.putImageData(imageData, 0, 0);
 }
 
 canvas.addEventListener("mousemove", move);
