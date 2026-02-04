@@ -2,8 +2,8 @@ var header = document.querySelector("h2");
 var canvas = document.querySelector("canvas");
 var ctx = canvas.getContext("2d");
 
-var width = 200;
-var height = 200;
+var width = 300;
+var height = width;
 
 canvas.width = width;
 canvas.height = height;
@@ -13,17 +13,29 @@ var mouseY = 0;
 
 var constant = math.complex(0.28, 0.01);
 
+var maxIterations = 64;
+
 function update() {
   header.innerHTML = constant.toString();
   draw();
 }
 
-function pointToColor(point) {
-  point = point.div(constant);
+function julia(z, i = 0) {
+  z = z.mul(z);
+  z = z.add(constant);
 
-  var red = point.re * 255;
-  var green = point.im * 255;
-  var blue = math.abs(point) * 255;
+  if (math.abs(z) > 2 || i == maxIterations) return i;
+  else return julia(z, i + 1);
+}
+
+function pointToColor(point) {
+  var iterations = julia(point);
+
+  var percentage = iterations / maxIterations;
+
+  var red = percentage * 255;
+  var green = percentage * 255;
+  var blue = percentage * 255;
 
   return `rgb(${red}, ${green}, ${blue})`;
 }
