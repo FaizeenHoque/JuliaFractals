@@ -2,7 +2,7 @@ var header = document.querySelector("h2");
 var canvas = document.querySelector("canvas");
 var ctx = canvas.getContext("2d");
 
-var width = 300;
+var width = 100;
 var height = width;
 
 canvas.width = width;
@@ -15,9 +15,42 @@ var constant = math.complex(0.28, 0.01);
 
 var maxIterations = 64;
 
+var clicked = false;
+var pan = math.complex(0, 0);
+
 function update() {
   header.innerHTML = constant.toString();
   draw();
+}
+
+function click(event) {
+  if (!clicked) {
+    clicked = true;
+    return;
+  }
+
+  mouseX = event.clientX - canvas.offsetLeft;
+  mouseY = event.clientY - canvas.offsetTop;
+
+  pan = pixelToPoint(mouseX, mouseY).sub(constant);
+
+  update();
+}
+
+function move(event) {
+  if (clicked) {
+    return;
+  }
+
+  mouseX = event.clientX - canvas.offsetLeft;
+  mouseY = event.clientY - canvas.offsetTop;
+
+  constant = pixelToPoint(mouseX, mouseY);
+
+  constant.re = math.round(constant.re * 100) / 100;
+  constant.im = math.round(constant.im * 100) / 100;
+
+  update();
 }
 
 function julia(z, i = 0) {
@@ -45,8 +78,12 @@ function pixelToPoint(x, y) {
   var zx = (x / width) * 2 - 1;
   var zy = (y / height) * 2 - 1;
 
+  var z = math.complex(zx, zy);
+
+  z = z.add(pan);
+
   // Create a complex number based on our new XY Values
-  return math.complex(zx, zy);
+  return z;
 }
 
 function drawPixel(x, y, color) {
@@ -66,18 +103,7 @@ function draw() {
   }
 }
 
-function move(event) {
-  mouseX = event.clientX - canvas.offsetLeft;
-  mouseY = event.clientY - canvas.offsetTop;
-
-  constant = pixelToPoint(mouseX, mouseY);
-
-  constant.re = math.round(constant.re * 100) / 100;
-  constant.im = math.round(constant.im * 100) / 100;
-
-  update();
-}
-
 canvas.addEventListener("mousemove", move);
+canvas.addEventListener("click", click);
 
 update();
